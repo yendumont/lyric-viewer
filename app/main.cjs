@@ -1,4 +1,4 @@
-// Lyric Viewer as an app: its own window, taskbar icon and name. It starts the viewer's server (Bun) in
+// Lyrics Viewer (#Hype) as an app: its own window, taskbar icon and name. It starts the viewer's server (Bun) in
 // the background, shows the page in a window of its own, and stops the server when the window closes.
 const { app, BrowserWindow, Menu, shell, nativeTheme } = require("electron");
 const { spawn, spawnSync } = require("node:child_process");
@@ -70,7 +70,7 @@ function createWindow() {
     minWidth: 520,
     minHeight: 420,
     backgroundColor: "#0e0e12",
-    title: "Lyric Viewer",
+    title: "Lyrics Viewer (#Hype)",
     icon: path.join(__dirname, "icon.ico"),
     autoHideMenuBar: true,
     show: false,
@@ -127,11 +127,11 @@ app.whenReady().then(() => {
   waitForServer((ok) => {
     if (!ok) {
       // The server did not come up: say why in the window instead of showing nothing.
-      window = new BrowserWindow({ width: 640, height: 260, title: "Lyric Viewer", backgroundColor: "#0e0e12", autoHideMenuBar: true });
+      window = new BrowserWindow({ width: 640, height: 260, title: "Lyrics Viewer (#Hype)", backgroundColor: "#0e0e12", autoHideMenuBar: true });
       window.loadURL(
         "data:text/html," +
           encodeURIComponent(
-            '<body style="font:16px Segoe UI;color:#fff;background:#0e0e12;padding:32px"><h3>Lyric Viewer could not start</h3>Is Bun installed? Run start.cmd in the app folder to see the error.</body>'
+            '<body style="font:16px Segoe UI;color:#fff;background:#0e0e12;padding:32px"><h3>Lyrics Viewer (#Hype) could not start</h3>Is Bun installed? Run start.cmd in the app folder to see the error.</body>'
           )
       );
       return;

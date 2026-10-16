@@ -1,6 +1,6 @@
 # Notice
 
-**Lyric Viewer is an unofficial, independent app.** It is not made, endorsed or supported by Spicy Lyrics, Spotify,
+**Lyrics Viewer (#Hype) is an unofficial, independent app.** It is not made, endorsed or supported by Spicy Lyrics, Spotify,
 Apple, VLC or any lyrics service named here.
 
 - **Spicy Lyrics** is made by [Spikerko](https://github.com/spikerko/spicy-lyrics) (AGPL-3.0). The folder `ui/spicy/` is a copy of
@@ -11,6 +11,6 @@ Apple, VLC or any lyrics service named here.
 - The other lyrics sources (LRCLIB, Unison, lrc.red, LRCMux, NetEase, QQ Music, KuGou, Kuwo, Deezer, AMLL TTML DB, BiniLyrics,
   YouTube Music, Genius, Musixmatch) are public services with their own terms. Use them as those terms allow.
 - Apple Music animated covers, Spotify covers and Spotify Canvases belong to their owners and are only shown on your own PC.
-- The logo is the Lyric Viewer logo.
+- The logo is the Lyrics Viewer (#Hype) logo.
 
-Lyric Viewer is licensed under the GNU Affero General Public License v3.0 (see `LICENSE`).
+Lyrics Viewer (#Hype) is licensed under the GNU Affero General Public License v3.0 (see `LICENSE`).

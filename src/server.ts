@@ -12,7 +12,7 @@ import { readSettings, writeSettings } from "./settings.ts";
 import { scanMusic, startMusicIndex } from "./local.ts";
 import { vlcArt, vlcCommand, vlcCurrentPath, vlcMedia } from "./vlc.ts";
 
-// Lyric Viewer: shows synced lyrics for whatever Windows says is playing, in Spicy Lyrics' style.
+// Lyrics Viewer (#Hype): shows synced lyrics for whatever Windows says is playing, in Spicy Lyrics' style.
 // Personal use only (see README.txt). Everything runs on this PC; the page is only served to it.
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
@@ -403,7 +403,7 @@ const BROWSERS = [
   `${process.env.LOCALAPPDATA}\\Google\\Chrome\\Application\\chrome.exe`,
 ].filter((p): p is string => !!p && existsSync(p));
 
-console.log(`Lyric Viewer is on ${address}`);
+console.log(`Lyrics Viewer (#Hype) is on ${address}`);
 
 function shutdown() {
   try {

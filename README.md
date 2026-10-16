@@ -1,13 +1,13 @@
-<p align="center"><img src="assets/logo.png" alt="Lyric Viewer" width="160"></p>
+<p align="center"><img src="assets/logo.png" alt="Lyrics Viewer (#Hype)" width="160"></p>
 
-# Lyric Viewer
+# Lyrics Viewer (#Hype)
 
 A lyrics window for Windows that follows whatever is playing (Spotify, VLC, a browser tab, any app that shows in Windows' media
 controls), finds its lyrics in every lyrics source it knows, and shows them with [Spicy Lyrics](https://github.com/spikerko/spicy-lyrics)'
 own renderer: word-by-word fill, letter effects, scrolling, backing vocals, duets, interlude dots, translation, line meanings and the
 animated background.
 
-> **Unofficial.** Lyric Viewer is an independent app, not made or supported by Spicy Lyrics, Spotify, Apple or VLC. See [NOTICE.md](NOTICE.md).
+> **Unofficial.** Lyrics Viewer (#Hype) is an independent app, not made or supported by Spicy Lyrics, Spotify, Apple or VLC. See [NOTICE.md](NOTICE.md).
 
 ## Features
 

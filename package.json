@@ -1,6 +1,6 @@
 {
     "name": "lyric-viewer",
-    "description": "Lyric Viewer: a lyrics window that follows what is playing on Windows, with Spicy Lyrics' renderer.",
+    "description": "Lyrics Viewer (#Hype): a lyrics window that follows what is playing on Windows, with Spicy Lyrics' renderer.",
     "license": "AGPL-3.0-only",
     "private": true,
     "type": "module",

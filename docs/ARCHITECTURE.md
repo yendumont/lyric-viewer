@@ -1,4 +1,4 @@
-# Lyric Viewer: architecture and maintenance notes
+# Lyrics Viewer (#Hype): architecture and maintenance notes
 
 How the app is put together, for anyone who wants to change it. (For what it does and how to run it, see the README.)
 ## What it is

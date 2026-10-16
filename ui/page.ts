@@ -160,7 +160,7 @@ function paintMeta(): void {
     lastSeen = seenStamp;
     rememberSong(seenUri, title, artists ? artists.split(", ") : [], media.durationMs ?? 0, viewer.coverUrl || undefined);
   }
-  document.title = title ? `${artists} - ${title}` : "Lyric Viewer";
+  document.title = title ? `${artists} - ${title}` : "Lyrics Viewer (#Hype)";
 
   // A new cover when the song changes, when the player hands over its own, and once the lookup has one.
   const key = search?.key ?? "";
@@ -249,7 +249,7 @@ function showIdle(): void {
   shownCover = "";
   viewer.coverUrl = "";
   clearForNewSong();
-  document.title = "Lyric Viewer";
+  document.title = "Lyrics Viewer (#Hype)";
 }
 
 /** The old song's lyrics go at once, and the loading placeholder shows until the new ones arrive. */
