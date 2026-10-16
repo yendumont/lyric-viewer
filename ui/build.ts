@@ -74,7 +74,15 @@ const sheets = [
   "polyfills/sonner-polyfill.css",
 ].map((file) => `/* ${file} */\n${css(file)}`);
 sheets.push(`/* LyricsManager/styles.css */\n${readFileSync(join(spicy, "components", "ReactComponents", "LyricsManager", "styles.css"), "utf8")}`);
-sheets.splice(3, 0, `/* default.scss */\n${compile(join(spicy, "css", "default.scss")).css}`);
+// Spicy Lyrics' extension injects a few @keyframes from app.tsx at start-up (the title marquee, skeleton sweep, ...); that code does not
+// run here, so the block is lifted out of app.tsx at build time and added to the stylesheet.
+{
+  const app = readFileSync(join(spicy, "app.tsx"), "utf8");
+  const start = app.indexOf("skeletonStyle.innerHTML = `");
+  const end = start < 0 ? -1 : app.indexOf("`;", start + 28);
+  if (start >= 0 && end > start) sheets.push(`/* keyframes from app.tsx */\n${app.slice(start + 27, end)}`);
+  else console.warn("keyframes block not found in app.tsx: the long-title marquee will not move");
+}sheets.splice(3, 0, `/* default.scss */\n${compile(join(spicy, "css", "default.scss")).css}`);
 writeFileSync(join(out, "spicy.css"), sheets.join("\n"));
 
 console.log(`Built ${result.outputs.length} file(s) into public/dist`);
