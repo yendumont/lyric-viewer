@@ -34,7 +34,8 @@ You need Windows 10 or 11, an internet connection, and [Bun](https://bun.sh). Yo
 `bun install` downloads Electron (about 100 MB) for you.
 
 1. **Get the files.** Either click the green **Code** button on this page → **Download ZIP**, and extract it somewhere you will keep it
-   (for example `C:\Apps\lyric-viewer`), or, if you have Git: `git clone https://github.com/yendumont/lyric-viewer.git`.
+   (for example `C:\Apps`). The ZIP extracts to a folder called `lyric-viewer-main`, so you get `C:\Apps\lyric-viewer-main`. Or, if you have
+   Git: `git clone https://github.com/yendumont/lyric-viewer.git` (that makes a folder called `lyric-viewer` instead).
 
 2. **Install Bun** (once). Open PowerShell and run:
 
@@ -47,12 +48,13 @@ You need Windows 10 or 11, an internet connection, and [Bun](https://bun.sh). Yo
 3. **Install the app's packages.** In PowerShell, go to the folder from step 1 and run:
 
    ```powershell
-   cd C:\Apps\lyric-viewer
+   cd C:\Apps\lyric-viewer-main
    bun install
    copy config.example.json config.json
    ```
 
-   (Use your own folder in the `cd` line. Tip: in File Explorer, open the folder, click the address bar, type `powershell` and press Enter.)
+   (Use your own folder in the `cd` line; it must be the folder that contains `start.cmd`. Tip: in File Explorer, open that folder, click the
+   address bar, type `powershell` and press Enter.)
 
 4. **Start it** by double-clicking `start.cmd` in that folder. The very first start builds the page, which takes a few seconds before the
    window appears. It opens its own window; closing the window stops everything. To get a shortcut: right-click `start.cmd` → Show more
