@@ -30,21 +30,40 @@ animated background.
 
 ## Install
 
-You need Windows 10 or 11 and [Bun](https://bun.sh).
+You need Windows 10 or 11, an internet connection, and [Bun](https://bun.sh). You do not need to install Node.js or Electron yourself:
+`bun install` downloads Electron (about 100 MB) for you.
 
-```powershell
-powershell -c "irm bun.sh/install.ps1 | iex"
-```
+1. **Get the files.** Either click the green **Code** button on this page → **Download ZIP**, and extract it somewhere you will keep it
+   (for example `C:\Apps\lyric-viewer`), or, if you have Git: `git clone https://github.com/yendumont/lyric-viewer.git`.
 
-Then, in a terminal in this folder:
+2. **Install Bun** (once). Open PowerShell and run:
 
-```powershell
-bun install
-copy config.example.json config.json
-```
+   ```powershell
+   powershell -c "irm bun.sh/install.ps1 | iex"
+   ```
 
-Start it with `start.cmd` (double-click it, or make a shortcut and pin it). The first start builds the page, which takes a few
-seconds. It opens its own window; closing the window stops everything.
+   Then **close that window and open a new PowerShell** so it can find `bun`.
+
+3. **Install the app's packages.** In PowerShell, go to the folder from step 1 and run:
+
+   ```powershell
+   cd C:\Apps\lyric-viewer
+   bun install
+   copy config.example.json config.json
+   ```
+
+   (Use your own folder in the `cd` line. Tip: in File Explorer, open the folder, click the address bar, type `powershell` and press Enter.)
+
+4. **Start it** by double-clicking `start.cmd` in that folder. The very first start builds the page, which takes a few seconds before the
+   window appears. It opens its own window; closing the window stops everything. To get a shortcut: right-click `start.cmd` → Show more
+   options → Send to → Desktop (create shortcut), and pin that if you like.
+
+It works straight away with no keys: it finds lyrics from the free sources. Add your keys and other settings afterwards (next section).
+
+**If the window says it could not start:** check that Bun is installed (open a new PowerShell and run `bun --version`), and run
+`bun install` again. To see the error, run `bun run src/server.ts` in the app folder and read what it prints.
+
+To update later: download the new files over the old ones (keep your `config.json`), then run `bun install` and `bun ui/build.ts`.
 
 ## Setting it up
 
