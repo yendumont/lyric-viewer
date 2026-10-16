@@ -65,7 +65,26 @@ It works straight away with no keys: it finds lyrics from the free sources. Add 
 **If the window says it could not start:** check that Bun is installed (open a new PowerShell and run `bun --version`), and run
 `bun install` again. To see the error, run `bun run src/server.ts` in the app folder and read what it prints.
 
-To update later: download the new files over the old ones (keep your `config.json`), then run `bun install` and `bun ui/build.ts`.
+## Updating
+
+1. **Close the app.**
+2. **Get the new files.** Download the ZIP again (Code → Download ZIP) and extract it somewhere temporary. If you installed with Git, run
+   `git pull` in the app folder instead and skip to step 4.
+3. **Copy them over your old folder.** Select everything inside the new `lyric-viewer-main` folder and paste it into your existing app
+   folder, choosing "Replace the files in the destination". Your `config.json` (your keys) and `data` folder (caches, saved lyrics and
+   your picture settings) are not in the ZIP, so they are kept.
+4. **Rebuild.** In PowerShell in the app folder (File Explorer → click the address bar → type `powershell` → Enter) run:
+
+   ```powershell
+   bun install
+   bun ui/build.ts
+   ```
+
+   The second command matters: the page is only built automatically the first time, so without it you would keep seeing the old version.
+5. **Start it** with `start.cmd`.
+
+Files that were removed in a newer version are not deleted by copying over. That is harmless; if something acts oddly after a big update,
+extract the ZIP into a fresh folder, copy only your `config.json` and `data` folder into it, and run `bun install` there.
 
 ## Setting it up
 
