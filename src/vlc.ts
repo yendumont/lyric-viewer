@@ -1,4 +1,5 @@
 import { config } from "./lookup.ts";
+import { cleanVideoName } from "./names.ts";
 import type { Media } from "./engine.ts";
 
 // VLC (3.x) does not tell Windows what it is playing, so it is read from its own web interface. In VLC:
@@ -79,21 +80,25 @@ export async function vlcMedia(): Promise<Media | null> {
 
     const meta = status.information?.category?.meta ?? {};
     const guess = fromFilename(String(meta.filename ?? ""));
-    const title = String(meta.title ?? "").trim() || guess.title;
+    const isVideo = Object.entries(status.information?.category ?? {}).some(([name, s]: [string, any]) => /^Stream/i.test(name) && /video/i.test(String(s?.Type ?? "")));
+    let title = String(meta.title ?? "").trim() || guess.title;
+    let artist = String(meta.artist ?? "").trim() || guess.artist;
+    // A video's name says what the video is as well as the song: cleaned, so the song can be found (Spicy Lyrics needs its Spotify id).
+    if (isVideo) ({ artist, title } = cleanVideoName(artist, title));
     if (!title) return null;
     const playing = status.state === "playing";
-    const songId = `${title}|${meta.artist ?? ""}`;
+    const songId = `${title}|${artist}`;
     return {
       app: "VLC",
       title,
-      artist: String(meta.artist ?? "").trim() || guess.artist,
+      artist,
       album: String(meta.album ?? "").trim(),
       status: playing ? "Playing" : "Paused",
       positionMs: Math.round(preciseMs(status, songId, Date.now())),
       durationMs: Math.round(Number(status.length ?? 0) * 1000),
       canSeek: true,
       quality: qualityOf(status.information),
-      video: Object.entries(status.information?.category ?? {}).some(([name, s]: [string, any]) => /^Stream/i.test(name) && /video/i.test(String(s?.Type ?? ""))),
+      video: isVideo,
       at: Date.now(),
     };
   } catch {
