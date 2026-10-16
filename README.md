@@ -107,10 +107,22 @@ keys: never share or commit it (it is in `.gitignore`).
 ### Spotify extras (optional)
 
 The exact song, Canvas, heart/shuffle/repeat/volume and the quality line come from Spotify's player state, read over Chromium's debugger
-port. Start Spotify with `--remote-debugging-port=8088` (with [Spicetify](https://spicetify.app):
-`spicetify config spotify_launch_flags "--remote-debugging-port=8088"` then `spicetify apply`). **That port can be used by any program
-on your PC**, so leave it off if you do not want that. `tools/undo-spotify-debug.ps1` puts Spotify's launch back as it was. Without it
-the app still works for any player; you just do not get those extras.
+port, so Spotify has to be started with `--remote-debugging-port=8088`. **That port can be used by any program on your PC**, so leave it off
+if you do not want that. Without it the app still works for any player; you just do not get those extras.
+`tools/undo-spotify-debug.ps1` puts Spotify's launch back as it was.
+
+With [Spicetify](https://spicetify.app):
+
+1. Spicetify's own command, `spicetify config spotify_launch_flags "--remote-debugging-port=8088"`, often does **not** save the value
+   (it treats the `--` as an option). Check with `spicetify config spotify_launch_flags`: if that prints nothing, edit the file by hand.
+2. Press Win+R, run `notepad %APPDATA%\spicetify\config-xpui.ini`, and set the line to
+   `spotify_launch_flags = --remote-debugging-port=8088` (no quotes; add it under `[Setting]` if there is no such line). Save it.
+3. Run `spicetify apply`. Spotify restarts.
+4. Check: with Spotify running, open `http://127.0.0.1:8088/json` in a browser. If you see text, the port is open.
+
+The flag only applies when **Spicetify** starts Spotify (`spicetify apply`, `spicetify watch`). If you open Spotify from the Start menu,
+the taskbar or at startup, it starts without it. To fix that, right-click your Spotify shortcut → Properties and add a space and
+`--remote-debugging-port=8088` to the end of **Target** (unpin and re-pin the taskbar one afterwards).
 
 ### VLC
 
