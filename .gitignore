@@ -1,0 +1,8 @@
+# Your keys and tokens: never commit this.
+config.json
+# Runtime data (caches, the app's browser profile with saved lyrics and settings).
+data/
+node_modules/
+# Built page: made by `bun ui/build.ts`.
+public/dist/
+*.log

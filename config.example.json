@@ -1,0 +1,21 @@
+{
+  "spicyApiKey": "",
+  "spotifyClientId": "",
+  "spotifyClientSecret": "",
+  "musixmatchToken": "",
+  "geminiApiKey": "",
+  "translateTo": "English",
+  "geminiModel": "gemini-3.5-flash-lite",
+  "geniusFavoriteArtists": [],
+  "geniusLooseSearch": true,
+  "geniusEagerMatch": true,
+  "lineMeaningsFrom": "everyone",
+  "wordSync": "hand",
+  "preferBestSync": true,
+  "order": [],
+  "disabled": [],
+  "musicFolders": [],
+  "vlcPort": 8080,
+  "vlcPassword": "",
+  "port": 3838
+}

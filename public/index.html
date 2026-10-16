@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lyric Viewer</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<!-- The same fonts Spicy Lyrics loads for its lyrics. -->
+<link rel="stylesheet" href="/fonts/spicy-lyrics/source.css">
+<link rel="stylesheet" href="/fonts/Vazirmatn/source.css">
+<link rel="stylesheet" href="/fonts/NotoSansGeorgian/source.css">
+<link rel="stylesheet" href="/dist/spicy.css">
+<link rel="stylesheet" href="/dist/main.css">
+<style>
+  /* Spotify's own colour variables, which Spicy Lyrics' stylesheets read. */
+  :root {
+    --spice-main: #0e0e12;
+    --spice-sidebar: #0e0e12;
+    --spice-text: #ffffff;
+    --spice-button: #ffffff;
+    --spice-rgb-selected-row: 255, 255, 255;
+    --encore-body-font-stack: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    --encore-icon-width: 24px;
+    --encore-icon-height: 24px;
+    --encore-icon-fill: currentColor;
+  }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0e0e12; color: #fff; font-family: var(--encore-body-font-stack); }
+  #app { position: fixed; inset: 0; }
+  #app > #SpicyLyricsPage { position: absolute; inset: 0; }
+  /* The "no lyrics" notice points at Spicy Lyrics' support; this app has none. */
+  .LyricsNotice .notice-code { display: none !important; }
+  /* Room on the right of the lyrics in the wide layout, as the cover has on the left. */
+  #SpicyLyricsPage.Fullscreen:not(.CompactMode) .LyricsContainer { padding-right: clamp(32px, 7vw, 140px); box-sizing: border-box; }
+  .IdleNotice { position: absolute; inset: 0; z-index: 20; display: none; place-content: center; text-align: center; gap: 10px; padding: 0 12%; color: rgba(255,255,255,0.65); font-size: 18px; pointer-events: none; }
+  .IdleNotice img { width: 112px; height: 112px; margin: 0 auto 6px; border-radius: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.35); }
+  .IdleNotice b { color: #fff; font-size: 26px; }
+  #SpicyLyricsPage.NothingPlaying .ContentBox { visibility: hidden; }
+  #SpicyLyricsPage.NothingPlaying ~ .IdleNotice { display: grid; }
+  .Metadata .Quality { margin-top: 4px; font-size: 0.8em; letter-spacing: 0.02em; color: rgba(255,255,255,0.55); text-align: center; }
+  .Metadata .Quality span:empty { display: none; }
+  /* The same side padding as the artist line, so the quality line sits exactly under its text in both layouts. */
+  .Metadata .Quality span { display: inline-block; padding: 0 3cqw 0 2.5cqw; white-space: nowrap; }
+  /* Settings window */
+  .st-overlay { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; background: rgba(0,0,0,0.45); backdrop-filter: blur(6px); }
+  .st-panel { width: min(640px, 92vw); max-height: 86vh; overflow: auto; padding: 8px 26px 26px; border-radius: 20px; color: #fff; font: 14px var(--encore-body-font-stack);
+    background: rgba(26,26,32,0.92); box-shadow: 0 24px 80px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.08); -webkit-user-select: text; user-select: text; }
+  .st-head { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; padding: 18px 0 8px; background: rgba(26,26,32,0.96); }
+  .st-head h2 { font-size: 22px; margin: 0; }
+  .st-close { width: 34px; height: 34px; border: 0; border-radius: 50%; background: rgba(255,255,255,0.1); color: #fff; font-size: 20px; cursor: pointer; }
+  .st-close:hover { background: rgba(255,255,255,0.2); }
+  .st-panel h3 { margin: 22px 0 4px; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+  .st-slider { display: flex; align-items: center; gap: 10px; }
+  .st-slider input { width: 170px; accent-color: #fff; }
+  .st-sliderval { min-width: 44px; text-align: right; color: rgba(255,255,255,0.7); font-size: 12.5px; }
+  .st-note { margin: 0 0 8px; color: rgba(255,255,255,0.5); font-size: 12.5px; }
+  .st-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 11px 0; border-top: 1px solid rgba(255,255,255,0.07); }
+  .st-text { flex: 1; min-width: 0; }
+  .st-label { font-weight: 600; }
+  .st-hint { margin-top: 2px; font-size: 12.5px; color: rgba(255,255,255,0.55); }
+  .st-input { width: 240px; padding: 8px 10px; border-radius: 10px; border: 0; background: rgba(255,255,255,0.1); color: #fff; font: inherit; outline: none; }
+  .st-input:focus { background: rgba(255,255,255,0.16); }
+  .st-input option { color: #000; }
+  .st-secret { display: flex; gap: 6px; align-items: center; }
+  .st-secret .st-input { width: 200px; }
+  .st-small { min-width: 30px; padding: 6px 10px; border: 0; border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff; font: inherit; cursor: pointer; }
+  .st-small:hover:not(:disabled) { background: rgba(255,255,255,0.2); }
+  .st-small:disabled { opacity: 0.3; cursor: default; }
+  .st-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .st-source { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 12px; background: rgba(255,255,255,0.06); }
+  .st-source.off .st-name, .st-source.off .st-rank { opacity: 0.4; }
+  .st-rank { width: 20px; color: rgba(255,255,255,0.5); font-size: 12px; text-align: right; }
+  .st-name { flex: 1; font-weight: 600; }
+  .st-toggle { position: relative; display: inline-block; width: 42px; height: 24px; flex: none; }
+  .st-toggle input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; z-index: 1; }
+  .st-track { position: absolute; inset: 0; border-radius: 999px; background: rgba(255,255,255,0.18); transition: background 0.2s; }
+  .st-track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+  .st-toggle input:checked + .st-track { background: #4cc16f; }
+  .st-toggle input:checked + .st-track::after { transform: translateX(18px); }
+  .LyricsMaker a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+  /* Spotify's own stylesheet sets border-box everywhere; the Canvas dock's heights count on it. */
+#SpicyLyricsPage .NowBar, #SpicyLyricsPage .NowBar * { box-sizing: border-box; }
+/* The Canvas dock has room for the title and artist only. */
+#SpicyLyricsPage.CanvasImmersive:not(.CompactMode) .NowBar .Metadata .Quality { display: none; }
+.vtools { position: fixed; top: 14px; right: 18px; z-index: 50; display: flex; gap: 6px; opacity: 0; transition: opacity 0.25s; }
+  #SpicyLyricsPage .MediaImageContainer .VlcVideo { object-fit: contain; background: #000; }
+  /* VLC's video as the background: above Spicy's own live background (Apple's cover), which steps aside. */
+  #SpicyLyricsPage .LiveBackgroundVideo.VlcBg { z-index: 2; }
+  #SpicyLyricsPage.VlcVideoBg .LiveBackgroundVideo:not(.VlcBg) { display: none; }
+  /* No album cover (Covers for Video Songs off, or none found): the video fills the screen and the player sits over it. */
+  #SpicyLyricsPage.NoCoverLook .MediaImageContainer { opacity: 0; transition: opacity 0.4s; }
+  #SpicyLyricsPage.NoCoverLook .NowBar .MediaBox { box-shadow: none; background: transparent; }
+  /* A song with a Canvas and an animated cover: the Canvas is the background, so Apple's live background steps aside. */
+  #SpicyLyricsPage.CanvasPairBg .LiveBackgroundVideo:not(.CanvasPair) { display: none; }
+  body:hover .vtools { opacity: 1; }
+  .vtool { width: 34px; height: 34px; border: 0; border-radius: 10px; display: grid; place-items: center; color: #fff; cursor: pointer; background: rgba(255,255,255,0.12); backdrop-filter: blur(12px); }
+  .vtool:hover { background: rgba(255,255,255,0.24); }
+  .vmenu { position: fixed; z-index: 60; min-width: 290px; max-height: 80vh; overflow: auto; padding: 8px; border-radius: 16px; color: #fff;
+    background: rgba(24,24,30,0.86); backdrop-filter: blur(30px) saturate(1.4); box-shadow: 0 16px 50px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.08); font: 14px var(--encore-body-font-stack); }
+  .vmenu[hidden] { display: none; }
+  .vmenu button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 16px; padding: 9px 12px; border: 0; border-radius: 10px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .vmenu button:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+  .vmenu button:disabled { opacity: 0.45; cursor: default; }
+  .vmenu button.on { background: rgba(255,255,255,0.14); }
+  .vmenu small { color: rgba(255,255,255,0.6); font-size: 12px; }
+  .vmenu hr { border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 4px; }
+  .vmenu .offset { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 6px; font-size: 13px; color: rgba(255,255,255,0.75); }
+  .vmenu .offset button { width: 32px; justify-content: center; padding: 6px 0; background: rgba(255,255,255,0.1); }
+  .vtoast { position: fixed; left: 50%; bottom: 56px; transform: translate(-50%, 12px); padding: 8px 16px; border-radius: 999px; background: rgba(20,20,26,0.88); backdrop-filter: blur(16px); color: #fff; font: 13px var(--encore-body-font-stack); opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s; z-index: 70; }
+  .vtoast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="module" src="/dist/main.js"></script>
+</body>
+</html>

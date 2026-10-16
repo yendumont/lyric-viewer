@@ -1,0 +1,40 @@
+{
+    "name": "lyric-viewer",
+    "description": "Lyric Viewer: a lyrics window that follows what is playing on Windows, with Spicy Lyrics' renderer.",
+    "license": "AGPL-3.0-only",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "start": "bun run src/server.ts"
+    },
+    "dependencies": {
+        "@kawarp/core": "1.3.1",
+        "@nanostores/react": "^1.1.0",
+        "@tanstack/virtual-core": "^3.16.0",
+        "cubic-spline": "^3.0.3",
+        "cyrillic-romanization": "^1.2.1",
+        "d3-ease": "^3.0.1",
+        "electron": "^33.0.0",
+        "fast-xml-parser": "^5.11.0",
+        "fflate": "^0.8.3",
+        "franc-all": "^7.2.0",
+        "hls.js": "^1.7.3",
+        "idb": "^8.0.3",
+        "kuroshiro": "^1.2.0",
+        "langs": "^2.0.0",
+        "linkedom": "^0.18.13",
+        "nanostores": "^1.3.0",
+        "react": "^19.2.6",
+        "react-dom": "^19.2.6",
+        "semver": "^7.8.1",
+        "simplebar": "^6.3.3",
+        "sonner": "^2.0.7"
+    },
+    "devDependencies": {
+        "sass": "^1.80.0",
+        "@types/bun": "latest"
+    },
+    "trustedDependencies": [
+        "electron"
+    ]
+}
