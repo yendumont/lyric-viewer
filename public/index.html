@@ -91,6 +91,13 @@
   #SpicyLyricsPage.NoCoverLook .NowBar .MediaBox { box-shadow: none; background: transparent; }
   /* A song with a Canvas and an animated cover: the Canvas is the background, so Apple's live background steps aside. */
   #SpicyLyricsPage.CanvasPairBg .LiveBackgroundVideo:not(.CanvasPair) { display: none; }
+  /* The title and artist lines clip their text (for the edge fade), which cut the tails off letters like j, y and g when the quality
+     line sits under them: give them room below, and the quality line a little air. */
+  #SpicyLyricsPage:not(.CanvasImmersive) .ContentBox .NowBar .Header .Metadata :is(.SongName, .Artists) > span { padding-bottom: 0.22em; }
+  .Metadata .Quality { margin-top: 5px; line-height: 1.35; flex-shrink: 0; }
+  /* The block is a fixed 10% of the height, tuned for two lines: with a quality line under them everything was squeezed (and the
+     artist's letter tails clipped), so it is as much taller as the quality line needs. */
+  #SpicyLyricsPage:not(.CanvasImmersive):not(.CompactMode):not(.ForcedCompactMode) .ContentBox .NowBar .Header .Metadata:has(.Quality span:not(:empty)) { height: calc(10cqh + 26px); }
   body:hover .vtools { opacity: 1; }
   .vtool { width: 34px; height: 34px; border: 0; border-radius: 10px; display: grid; place-items: center; color: #fff; cursor: pointer; background: rgba(255,255,255,0.12); backdrop-filter: blur(12px); }
   .vtool:hover { background: rgba(255,255,255,0.24); }
