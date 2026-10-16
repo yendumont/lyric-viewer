@@ -157,7 +157,6 @@ no longer fit (`ui/build.ts` lists the replaced ones).
 - Canvas, heart, shuffle, repeat, volume and the Spotify quality line only work with Spotify's debugger port open.
 - Apple animated covers exist only for some albums.
 - The old Windows Media Player and apps that do not register with Windows' media controls are not detected.
-- Showing a VLC video has had limited testing.
 - **A frozen Canvas** usually means Windows animations are off: Settings → Ease of Access → Display → "Show animations in Windows" must be On (Battery saver can also turn it off). Spicy Lyrics' Canvas code stops when Windows asks for reduced motion, in Spotify and in this app.
 - The page can only be opened on the same PC (`http://127.0.0.1:3838`), not from other devices.
 

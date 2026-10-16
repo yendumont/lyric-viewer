@@ -79,7 +79,7 @@ Odesli now needs a key and Spotify developer apps may need Premium, so neither i
 - VLC: position accurate to about 50 ms (whole-second ticks); VLC's 0..1 position was tried and is too coarse.
 - Not ported: Spicy's full settings panel, Popup Lyrics.
 - Spotify Canvas, heart, shuffle, repeat and volume need Spotify running with the debugger port (8088); other players have none of them. Apple covers need the album found on Apple Music (many albums have none).
-- VLC video (cover / background / no-cover look, sync) was NOT tested against a live VLC (it would not start in the test sessions); the page side was tested with a stand-in file, and Apple's fragmented MP4 cannot be seeked reliably, so the playbackRate catch-up is also untested on a seekable file.
+- VLC video (cover / background / no-cover look, sync, name cleaning, Spotify-client id search) was confirmed working by the maintainer with a real VLC video. The playbackRate catch-up has only been seen working on real files, not on Apple's fragmented MP4 (which cannot be seeked reliably).
 - One unexplained event: the saved blur value (`experimentValue:liveBackground`) once read 0 instead of 24 right after a rebuild; it stayed 24 across later reloads.
 - Old Windows Media Player and apps that do not register with Windows' media controls are not detected.
 - Gemini translation, VLC playback controls and audio-delay feel were never verified live.
@@ -137,7 +137,7 @@ How each piece works:
   calls it after upload/delete/reset; falls back to `viewer.reload`), `getTracks.ts` (names come from the last 200 songs the page showed, `ldbSeen` in localStorage). The list's play button does nothing.
 - Every source is asked unless it is listed in `disabled` in config.json (Settings > Lyrics sources). Musixmatch is skipped, with a note, without your own token (Settings > Keys).
 
-- VLC video names: for a file with a video stream, `src/names.ts cleanVideoName` strips "(Official Video)", "[4K]", YouTube ids, "- Topic" and the like (keeping "(feat. ...)"), and splits "Artist - Song" when no artist is tagged, before the song is looked up (Spicy Lyrics needs the Spotify id). Used in `src/vlc.ts vlcMedia`; audio files are untouched. Tested on example names only, not with a real VLC video.
+- VLC video names: for a file with a video stream, `src/names.ts cleanVideoName` strips "(Official Video)", "[4K]", YouTube ids, "- Topic" and the like (keeping "(feat. ...)"), and splits "Artist - Song" when no artist is tagged, before the song is looked up (Spicy Lyrics needs the Spotify id). Used in `src/vlc.ts vlcMedia`; audio files are untouched.
 
 - Spotify id for songs playing elsewhere (VLC, a browser): with no own Spotify app configured, `src/resolve.ts` asks the running Spotify client to search for the song (`spotifyClientSearch` in `src/spotifyLocal.ts`): Spotify's own search (`Spicetify.GraphQL.Request` with `searchModalResults`, run through the debugger port with the client's own login, so no developer app or key), answered in the Web API's shape. Only `api.spotify.com/v1/search` addresses are accepted by the function, and the Web API itself (CosmosAsync or the client token) was tried first and is rate-limited (429), which is why GraphQL is used. Its answer has no album name or length, so matching is by title and artist. Then ListenBrainz. Needs Spotify open with the debugger port. Verified live: "ick" by yuke, "Blinding Lights", "Video Games" and "Snooze" resolved, and Spicy Lyrics returned word-synced lyrics for the first two.
 
