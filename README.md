@@ -98,7 +98,7 @@ keys: never share or commit it (it is in `.gitignore`).
 - **Gemini key** (`geminiApiKey`, `translateTo`, `geminiModel`): for translation. The lyrics of the song on screen are sent to Google's
   Gemini API with your key, nothing else is.
 - **Spotify app** (`spotifyClientId`, `spotifyClientSecret`, optional): Spicy Lyrics is looked up by Spotify song id. Without an app of
-  your own the app asks ListenBrainz's public lookup (artist, album, title to Spotify ids), which covers released songs. With your
+  your own, and with Spotify open with its debugger port (see below), Spotify itself searches for the song, using your own login and no app or key. Failing that the app asks ListenBrainz's public lookup (artist, album, title to Spotify ids), which covers released songs. With your
   own app (or one a friend lets you use; it is only used to search the public catalogue) its search is used first.
 - **Source order and switches**: settings window → Lyrics sources.
 - **Music folders** (`musicFolders`): extra folders to search for the playing song's file. Files anywhere Windows has indexed are found

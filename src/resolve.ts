@@ -1,6 +1,7 @@
 import { config } from "./lookup.ts";
 import { readTrack } from "./spotify.ts";
 import { sameName } from "./names.ts";
+import { spotifyClientSearch } from "./spotifyLocal.ts";
 import type { TrackInfo } from "./utils/Lyrics/providers/types.ts";
 
 /**
@@ -96,13 +97,12 @@ async function spotifyToken(): Promise<string | null> {
 
 type SpotifyHit = { id: string; name: string; artists: string[]; album: string; durationMs: number; cover?: string };
 
-async function searchSpotify(p: Playing, bearer: string): Promise<SpotifyHit | null> {
+/** `run` makes one Spotify search request: with your own app's token, or through the running Spotify client (see spotifyClientSearch). */
+async function searchSpotify(p: Playing, run: (url: string) => Promise<any | null>): Promise<SpotifyHit | null> {
   const title = plainTitle(p.title);
   const artist = p.artist.split(/\s*[;,&]\s*/)[0] || p.artist;
   for (const q of [`track:${title} artist:${artist}`, `${title} ${artist}`]) {
-    const data = await getJson(`https://api.spotify.com/v1/search?type=track&limit=8&q=${encodeURIComponent(q)}`, {
-      headers: { Authorization: `Bearer ${bearer}` },
-    });
+    const data = await run(`https://api.spotify.com/v1/search?type=track&limit=8&q=${encodeURIComponent(q)}`);
     const items: any[] = data?.tracks?.items ?? [];
     let best: { hit: SpotifyHit; s: number } | null = null;
     for (const item of items) {
@@ -166,7 +166,11 @@ async function doResolve(p: Playing, spotifyHint?: string): Promise<Resolved> {
   };
 
   const bearer = await spotifyToken();
-  const [apple, spotify] = await Promise.all([searchApple(p), bearer ? searchSpotify(p, bearer) : Promise.resolve(null)]);
+  // Your own Spotify app's search when one is set up; otherwise the running Spotify client searches (no app or key needed, Spotify just has to be open).
+  const run = bearer
+    ? (url: string) => getJson(url, { headers: { Authorization: `Bearer ${bearer}` } })
+    : (url: string) => spotifyClientSearch(url);
+  const [apple, spotify] = await Promise.all([searchApple(p), searchSpotify(p, run)]);
 
   let cover = apple?.artworkUrl100?.replace(/\d+x\d+bb/, "600x600bb");
   if (apple && !base.album) base.album = apple.collectionName ?? "";

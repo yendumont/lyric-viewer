@@ -201,3 +201,75 @@ export async function spotifyDo(action: string, arg = 0): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Spotify's own search, run by the open Spotify client with its own login through the debugger port (the search box's query, via
+ * Spicetify's GraphQL helper). It needs no developer app and no key, and is not the Web API (which the client's token gets rate
+ * limited on). The address is a Web API search address, the answer is shaped like the Web API's (`tracks.items`), so the caller does not
+ * care which one answered. Album names and lengths are not in this search's answer. Null when Spotify is not reachable.
+ */
+export async function spotifyClientSearch(url: string): Promise<any | null> {
+  if (!url.startsWith("https://api.spotify.com/v1/search?")) return null;
+  // "track:Song artist:Name" (a Web API filter) is just "Song Name" in Spotify's search box.
+  const wanted = (new URL(url).searchParams.get("q") ?? "").replace(/\b(?:track|artist|album):/gi, " ").replace(/\s+/g, " ").trim();
+  if (!wanted) return null;
+  try {
+    const targets: any[] = await (await fetch(`http://127.0.0.1:${PORT}/json`, { signal: AbortSignal.timeout(700) })).json();
+    const page = targets.find((t) => t.type === "page" && /xpui/i.test(t.url ?? ""));
+    if (!page?.webSocketDebuggerUrl) return null;
+    const answer = await new Promise<any | null>((resolve) => {
+      const ws = new WebSocket(page.webSocketDebuggerUrl);
+      const done = (value: any | null) => {
+        clearTimeout(timer);
+        try {
+          ws.close();
+        } catch {
+          // already closed
+        }
+        resolve(value);
+      };
+      const timer = setTimeout(() => done(null), 8000);
+      ws.onerror = () => done(null);
+      ws.onopen = () =>
+        ws.send(
+          JSON.stringify({
+            id: 1,
+            method: "Runtime.evaluate",
+            params: {
+              expression: `(async () => { try { const g = Spicetify.GraphQL; return JSON.stringify(await g.Request(g.Definitions.searchModalResults, { searchTerm: ${JSON.stringify(wanted)}, offset: 0, limit: 8, numberOfTopResults: 8, includeAudiobooks: false, includeArtistHasConcertsField: false, includePreReleases: false, includeAuthors: false })); } catch (e) { return null; } })()`,
+              awaitPromise: true,
+              returnByValue: true,
+            },
+          })
+        );
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(String(event.data));
+          if (message.id !== 1) return;
+          const raw = message.result?.result?.value;
+          done(raw ? JSON.parse(raw) : null);
+        } catch {
+          done(null);
+        }
+      };
+    });
+    const found: any[] = answer?.data?.searchV2?.topResultsV2?.itemsV2 ?? answer?.data?.searchV2?.tracksV2?.items ?? [];
+    const items = found
+      .map((entry) => entry?.item?.data ?? entry?.item ?? entry)
+      .filter((data) => data?.__typename === "Track" && typeof data.uri === "string")
+      .map((data) => {
+        const covers: { url: string; width?: number }[] = data.albumOfTrack?.coverArt?.sources ?? [];
+        const best = [...covers].sort((x, y) => (y.width ?? 0) - (x.width ?? 0))[0];
+        return {
+          id: String(data.uri).split(":")[2],
+          name: String(data.name ?? ""),
+          artists: (data.artists?.items ?? []).map((a: any) => ({ name: String(a?.profile?.name ?? "") })),
+          album: { name: String(data.albumOfTrack?.name ?? ""), images: best ? [{ url: best.url }] : [] },
+          duration_ms: Number(data.duration?.totalMilliseconds ?? 0),
+        };
+      });
+    return answer ? { tracks: { items } } : null;
+  } catch {
+    return null;
+  }
+}
