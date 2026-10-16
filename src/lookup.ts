@@ -108,7 +108,7 @@ export async function lookupOne(id: (typeof ALL_IDS)[number], track: TrackInfo):
   const label = id === "spicy" ? "Spicy Lyrics" : PROVIDER_META[id].label;
   const spicyKey = (config.spicyApiKey || process.env.SPICY_LYRICS_SECRET_KEY || "").trim();
   if (id === "spicy" && !spicyKey) {
-    return { id, label, state: "skipped", detail: "Needs your Spicy Lyrics key in config.json" };
+    return { id, label, state: "skipped", detail: "Needs your Spicy Lyrics key (Settings > Keys). Get one at developers.spicylyrics.org/dashboard" };
   }
   if (id === "spicy" && !track.spotifyId) {
     return {

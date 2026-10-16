@@ -70,7 +70,9 @@ To update later: download the new files over the old ones (keep your `config.jso
 Open the settings window with the comma key (or the S menu → Settings). Everything below is also in `config.json`, which holds your
 keys: never share or commit it (it is in `.gitignore`).
 
-- **Spicy Lyrics key** (`spicyApiKey`): Spicy Lyrics' developer API, only sent to Spicy Lyrics. Without it that source is skipped.
+- **Spicy Lyrics key** (`spicyApiKey`): for Spicy Lyrics' own lyrics. Go to the [Spicy Lyrics developer dashboard](https://developers.spicylyrics.org/dashboard),
+  create an application there, and copy its secret key into the settings window (Keys and tokens) or into `config.json`. The key is
+  only ever sent to Spicy Lyrics' API. Without it that source is skipped and the other sources still work.
 - **Musixmatch token** (`musixmatchToken`): your own; without it Musixmatch is skipped.
 - **Gemini key** (`geminiApiKey`, `translateTo`, `geminiModel`): for translation. The lyrics of the song on screen are sent to Google's
   Gemini API with your key, nothing else is.
