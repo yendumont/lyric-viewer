@@ -359,7 +359,8 @@ const server = Bun.serve({
     if (url.pathname === "/api/init") {
       const c = config as any;
       return json({
-        geminiApiKey: c.geminiApiKey ?? "",
+        // The Gemini key stays on this server: the page only learns whether one is set (see /api/gemini).
+        geminiKeySet: String(c.geminiApiKey ?? "").trim() !== "",
         geminiModel: c.geminiModel ?? "",
         translateTo: c.translateTo ?? "",
         geniusFavoriteArtists: (c.geniusFavoriteArtists ?? []).join(", "),
@@ -370,6 +371,27 @@ const server = Bun.serve({
       });
     }
 
+    // Gemini translation requests from the page: the key is added here, so it never reaches the page. Only Gemini's generate
+    // endpoints are forwarded, and only to Google.
+    if (url.pathname.startsWith("/api/gemini/") && req.method === "POST") {
+      const rest = decodeURIComponent(url.pathname.slice("/api/gemini/".length));
+      if (!/^[A-Za-z0-9._-]+:(?:generateContent|streamGenerateContent)$/.test(rest)) return new Response("not allowed", { status: 400 });
+      const key = String((config as any).geminiApiKey ?? "").trim();
+      if (!key) return json({ error: { message: "No Gemini API key is set (Settings > Keys and tokens)." } }, 400);
+      const body = await req.arrayBuffer();
+      if (body.byteLength > 2_000_000) return new Response("too large", { status: 413 });
+      try {
+        const upstream = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${rest}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+          body,
+          signal: AbortSignal.timeout(60_000),
+        });
+        return new Response(upstream.body, { status: upstream.status, headers: { "Content-Type": upstream.headers.get("content-type") ?? "application/json" } });
+      } catch (error) {
+        return json({ error: { message: `Could not reach Gemini (${error instanceof Error ? error.message : "network error"})` } }, 502);
+      }
+    }
     if (url.pathname === "/cover") return coverFor(url.searchParams.get("key") ?? "", url.searchParams.get("video") === "1");
     if (url.pathname === "/api/motion") {
       const key = await animatedCover(url.searchParams.get("artist") ?? "", url.searchParams.get("album") ?? "", url.searchParams.get("track") ?? "");

@@ -6,6 +6,8 @@ const http = require("node:http");
 const path = require("node:path");
 const fs = require("node:fs");
 
+const { isAppPage } = require("./navigation.cjs");
+
 const ROOT = path.resolve(__dirname, "..");
 const PORT = readPort();
 const ADDRESS = `http://127.0.0.1:${PORT}`;
@@ -90,7 +92,7 @@ function createWindow() {
     return { action: "deny" };
   });
   window.webContents.on("will-navigate", (event, url) => {
-    if (!url.startsWith(ADDRESS)) {
+    if (!isAppPage(url, ADDRESS)) {
       event.preventDefault();
       if (/^https:\/\//.test(url)) shell.openExternal(url);
     }

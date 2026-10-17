@@ -344,7 +344,9 @@ const post = (url: string, body: unknown) =>
 async function loadInit(): Promise<void> {
   try {
     const init = await (await fetch("/api/init")).json();
-    $geminiApiKey.set(init.geminiApiKey ?? "");
+    // The real key never reaches the page (the server adds it, see /api/gemini). The page only needs to know that one is set;
+    // setting this also overwrites any key an older version had saved in this window's storage.
+    $geminiApiKey.set(init.geminiKeySet ? "(kept by the server)" : "");
     if (init.geminiModel) $geminiModel.set(init.geminiModel);
     $translationLanguage.set(init.translateTo || "English");
     $geniusFavoriteArtists.set(init.geniusFavoriteArtists ?? "");
