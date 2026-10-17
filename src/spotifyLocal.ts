@@ -213,8 +213,6 @@ export async function spotifyClientSearch(url: string): Promise<any | null> {
   // "track:Song artist:Name" (a Web API filter) is just "Song Name" in Spotify's search box.
   const wanted = (new URL(url).searchParams.get("q") ?? "").replace(/\b(?:track|artist|album):/gi, " ").replace(/\s+/g, " ").trim();
   if (!wanted) return null;
-  // The song's text goes into the command as base64 (letters, digits, + / = only), so nothing in it can be read as code.
-  const payload = Buffer.from(JSON.stringify({ searchTerm: wanted }), "utf8").toString("base64");
   try {
     const targets: any[] = await (await fetch(`http://127.0.0.1:${PORT}/json`, { signal: AbortSignal.timeout(700) })).json();
     const page = targets.find((t) => t.type === "page" && /xpui/i.test(t.url ?? ""));
@@ -232,22 +230,26 @@ export async function spotifyClientSearch(url: string): Promise<any | null> {
       };
       const timer = setTimeout(() => done(null), 8000);
       ws.onerror = () => done(null);
-      ws.onopen = () =>
-        ws.send(
-          JSON.stringify({
-            id: 1,
-            method: "Runtime.evaluate",
-            params: {
-              expression: `(async () => { try { const { searchTerm } = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob("${payload}"), (c) => c.charCodeAt(0)))); const g = Spicetify.GraphQL; return JSON.stringify(await g.Request(g.Definitions.searchModalResults, { searchTerm, offset: 0, limit: 8, numberOfTopResults: 8, includeAudiobooks: false, includeArtistHasConcertsField: false, includePreReleases: false, includeAuthors: false })); } catch (e) { return null; } })()`,
-              awaitPromise: true,
-              returnByValue: true,
-            },
-          })
-        );
+      // The song's text is passed as a call argument, never built into code: the page's global object is fetched first (message 1),
+      // then a fixed function is called on it with the text as its argument (message 2).
+      const fixedFunction = `async function (searchTerm) { try { const g = Spicetify.GraphQL; return JSON.stringify(await g.Request(g.Definitions.searchModalResults, { searchTerm, offset: 0, limit: 8, numberOfTopResults: 8, includeAudiobooks: false, includeArtistHasConcertsField: false, includePreReleases: false, includeAuthors: false })); } catch (e) { return null; } }`;
+      ws.onopen = () => ws.send(JSON.stringify({ id: 1, method: "Runtime.evaluate", params: { expression: "globalThis" } }));
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(String(event.data));
-          if (message.id !== 1) return;
+          if (message.id === 1) {
+            const objectId = message.result?.result?.objectId;
+            if (!objectId) return done(null);
+            ws.send(
+              JSON.stringify({
+                id: 2,
+                method: "Runtime.callFunctionOn",
+                params: { objectId, functionDeclaration: fixedFunction, arguments: [{ value: wanted }], awaitPromise: true, returnByValue: true },
+              })
+            );
+            return;
+          }
+          if (message.id !== 2) return;
           const raw = message.result?.result?.value;
           done(raw ? JSON.parse(raw) : null);
         } catch {
