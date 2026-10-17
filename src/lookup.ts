@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync } from "node:fs";
 import { WORKER_BASE } from "./shim.ts";
 import { safeUrl, type Credit } from "./credit.ts";
@@ -52,7 +53,7 @@ export type Config = {
   browser?: string;
 };
 
-const CONFIG_FILE = new URL("../config.json", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
+const CONFIG_FILE = fileURLToPath(new URL("../config.json", import.meta.url));
 export const config: Config = existsSync(CONFIG_FILE) ? JSON.parse(readFileSync(CONFIG_FILE, "utf8").replace(/^\uFEFF/, "")) : {};
 const wordSync = () => config.wordSync ?? "hand";
 

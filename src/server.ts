@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import "./shim.ts";
 import worker from "./worker/worker.js";
 import { WORKER_BASE } from "./shim.ts";
@@ -15,7 +16,7 @@ import { vlcArt, vlcCommand, vlcCurrentPath, vlcMedia } from "./vlc.ts";
 // Lyrics Viewer (#Hype): shows synced lyrics for whatever Windows says is playing, in Spicy Lyrics' style.
 // Personal use only (see README.txt). Everything runs on this PC; the page is only served to it.
 
-const ROOT = new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const PUBLIC = join(ROOT, "public");
 const PORT = Number((config as any).port) || 3838;
 const HOST = "127.0.0.1";

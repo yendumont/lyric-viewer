@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { ALL_IDS, config, lookupOne, type Outcome } from "./lookup.ts";
@@ -43,7 +44,7 @@ export type Media = {
 type Id = (typeof ALL_IDS)[number];
 const RANK: Record<string, number> = { word: 3, line: 2, none: 1 };
 
-const PICKS_FILE = new URL("../data/picks.json", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
+const PICKS_FILE = fileURLToPath(new URL("../data/picks.json", import.meta.url));
 const picks: Record<string, Id> = existsSync(PICKS_FILE) ? JSON.parse(readFileSync(PICKS_FILE, "utf8")) : {};
 
 export type Search = {
@@ -106,7 +107,7 @@ export function pin(key: string, id: Id | null): void {
 export const pinned = (s: Search): Id | null => picks[pinKey(s)] ?? null;
 
 // Timing corrections (ms) per song and source: only song names, source ids and numbers.
-const OFFSETS_FILE = new URL("../data/offsets.json", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
+const OFFSETS_FILE = fileURLToPath(new URL("../data/offsets.json", import.meta.url));
 const offsets: Record<string, number> = existsSync(OFFSETS_FILE) ? JSON.parse(readFileSync(OFFSETS_FILE, "utf8")) : {};
 const offsetKey = (s: Search, id: Id) => `${pinKey(s)}|${id}`;
 

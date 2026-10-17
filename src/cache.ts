@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import type { Outcome } from "./lookup.ts";
@@ -6,7 +7,7 @@ import type { Outcome } from "./lookup.ts";
 // again. Not kept: Spicy Lyrics' answers (its terms: not stored), lyrics from the song's own file (read fresh), and
 // errors. A source that had nothing is remembered for a shorter time, since lyrics get added.
 
-const FILE = new URL("../data/lyrics-cache.json", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
+const FILE = fileURLToPath(new URL("../data/lyrics-cache.json", import.meta.url));
 const FOUND_MS = 3 * 24 * 3600_000;
 const NONE_MS = 6 * 3600_000;
 const MAX_SONGS = 300;

@@ -1,4 +1,5 @@
-﻿// Makes the provider code (written for Spotify's page) run on its own: a tiny stand-in for
+import { fileURLToPath } from "node:url";
+// Makes the provider code (written for Spotify's page) run on its own: a tiny stand-in for
 // the bits of Spicetify it touches, a DOMParser for Genius pages, and an in-process copy of
 // the Worker so Genius and YouTube Music need no deployed Worker.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -8,7 +9,7 @@ import worker from "./worker/worker.js";
 
 export const WORKER_BASE = "http://worker.local";
 
-const STORE = new URL("../data/storage.json", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
+const STORE = fileURLToPath(new URL("../data/storage.json", import.meta.url));
 const memory: Record<string, string> = existsSync(STORE) ? JSON.parse(readFileSync(STORE, "utf8")) : {};
 
 (globalThis as any).Spicetify = {

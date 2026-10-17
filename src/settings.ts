@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { existsSync, writeFileSync, renameSync } from "node:fs";
 import { config } from "./lookup.ts";
 import { ALL_IDS } from "./lookup.ts";
@@ -7,7 +8,7 @@ import type { LyricsProviderId } from "./utils/Lyrics/providers/registry.ts";
 // The settings page reads and writes config.json through this. Keys and tokens are never sent to the page:
 // it is only told whether one is set, and can replace or clear it.
 
-const CONFIG_FILE = new URL("../config.json", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
+const CONFIG_FILE = fileURLToPath(new URL("../config.json", import.meta.url));
 
 const SECRETS = ["spicyApiKey", "musixmatchToken", "geminiApiKey", "vlcPassword", "spotifyClientSecret"] as const;
 

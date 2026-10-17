@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { existsSync, mkdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { sameName } from "./names.ts";
@@ -6,7 +7,7 @@ import { sameName } from "./names.ts";
 // HLS stream, and that stream is one fragmented MP4 file (the playlist only slices it by byte range), so the file is
 // downloaded once whole and served from disk: the page plays it as an ordinary looping video, no HLS player needed.
 
-const DIR = new URL("../data/motion/", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
+const DIR = fileURLToPath(new URL("../data/motion/", import.meta.url));
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
 const NONE_FILE = join(DIR, "none.json");
 const NONE_MS = 7 * 24 * 3600_000;

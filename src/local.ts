@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { existsSync, readdirSync, readFileSync, statSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, extname, join } from "node:path";
 import { config } from "./lookup.ts";
@@ -11,7 +12,7 @@ import { sameName } from "./names.ts";
 // from the file when needed.
 
 const AUDIO = new Set([".mp3", ".flac", ".m4a", ".mp4", ".aac", ".ogg", ".oga", ".opus"]);
-const INDEX_FILE = new URL("../data/music-index.json", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
+const INDEX_FILE = fileURLToPath(new URL("../data/music-index.json", import.meta.url));
 
 type Entry = { path: string; size: number; mtime: number; title: string; artists: string[]; album: string };
 let index: Entry[] = [];
