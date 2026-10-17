@@ -9,6 +9,9 @@ animated background.
 
 > **Unofficial.** Lyrics Viewer (#Hype) is an independent app, not made or supported by Spicy Lyrics, Spotify, Apple or VLC. See [NOTICE.md](NOTICE.md).
 
+> **Status:** a personal project, looked after when time allows, so fixes may be slow. If something breaks, see [MAINTENANCE.md](MAINTENANCE.md) for the usual
+> causes, and [SECURITY.md](SECURITY.md) to report a security problem privately.
+
 ## Features
 
 - **Follows what is playing.** Windows' media controls, VLC (through its web interface) and, optionally, Spotify's own player state.
@@ -32,6 +35,10 @@ animated background.
 
 You need Windows 10 or 11, an internet connection, and [Bun](https://bun.sh). You do not need to install Node.js or Electron yourself:
 `bun install` fetches the app's packages, and the first start of the app downloads Electron (about 100 MB) for you.
+
+**The quick way:** download and extract the files (step 1 below), then **double-click `Setup.cmd`**. It offers to install Bun if you do not have it, installs the packages, downloads
+Electron, builds the page, creates your `config.json` and puts a **Lyrics Viewer** shortcut on your desktop. Use that shortcut from then on. Setup is safe to run again.
+If you prefer to do it by hand, or something goes wrong, the steps are below.
 
 1. **Get the files.** Either click the green **Code** button on this page → **Download ZIP**, and extract it somewhere you will keep it
    (for example `C:\Apps`). The ZIP extracts to a folder called `lyric-viewer-main`, so you get `C:\Apps\lyric-viewer-main`. Or, if you have
@@ -72,18 +79,23 @@ It works straight away with no keys: it finds lyrics from the free sources. Add 
 3. **Copy them over your old folder.** Select everything inside the new `lyric-viewer-main` folder and paste it into your existing app
    folder, choosing "Replace the files in the destination". Your `config.json` (your keys) and `data` folder (caches, saved lyrics and
    your picture settings) are not in the ZIP, so they are kept.
-4. **Rebuild.** In PowerShell in the app folder (File Explorer → click the address bar → type `powershell` → Enter) run:
+4. **Rebuild: double-click `Setup.cmd` again.** It is safe to run again: it reinstalls the packages, downloads a newer Electron if the version changed, rebuilds
+   the page and keeps your `config.json` and `data`. It also refreshes the desktop shortcut.
+
+   Or by hand, in PowerShell in the app folder (File Explorer → click the address bar → type `powershell` → Enter):
 
    ```powershell
    bun install
    bun ui/build.ts
    ```
 
-   The second command matters: the page is only built automatically the first time, so without it you would keep seeing the old version.
-5. **Start it** with `start.cmd`. If the update changed Electron's version, it downloads the new one by itself first.
+   The rebuild matters: the page is only built automatically the first time, so without it you would keep seeing the old version.
+5. **Start it** from your desktop shortcut or with `start.cmd`. If the update changed Electron's version, `start.cmd` downloads the new one by itself first.
+
+You do **not** need to run `Setup.cmd` again unless you are updating, moved the app folder (the shortcut then points at the old place), or something broke.
 
 Files that were removed in a newer version are not deleted by copying over. That is harmless; if something acts oddly after a big update,
-extract the ZIP into a fresh folder, copy only your `config.json` and `data` folder into it, and run `bun install` there.
+extract the ZIP into a fresh folder, copy only your `config.json` and `data` folder into it, and run `Setup.cmd` there.
 
 ## Setting it up
 
