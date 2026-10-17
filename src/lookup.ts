@@ -20,11 +20,8 @@ import { PROVIDER_META, type ExternalProviderId } from "./utils/Lyrics/providers
 import type { TrackInfo } from "./utils/Lyrics/providers/types.ts";
 
 export type Config = {
-  /** Where the page is served: "127.0.0.1" (this PC only, the default), "::" (every network address, IPv4 and IPv6) or "0.0.0.0" (IPv4 only). */
-  host?: string;
+  /** The port the page is served on (default 3838). The page is only ever served on this PC (127.0.0.1): there is no setting to open it to other devices. */
   port?: number;
-  /** A password for the page. Required whenever host is anything other than this PC. */
-  accessCode?: string;
   /** Your own Musixmatch user token (Musixmatch finds nothing without one). */
   musixmatchToken?: string;
   /** Your Spicy Lyrics developer secret key (sl_sk_...). The SPICY_LYRICS_SECRET_KEY environment variable works too. */
