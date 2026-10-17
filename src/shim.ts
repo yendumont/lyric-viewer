@@ -24,9 +24,19 @@ const memory: Record<string, string> = existsSync(STORE) ? JSON.parse(readFileSy
 };
 (globalThis as any).DOMParser = DOMParser;
 
+/** Only the helper's own address (not a lookalike such as http://worker.local.example/) is answered in-process. */
+const WORKER_ORIGIN = new URL(WORKER_BASE).origin;
+const isWorkerUrl = (candidate: string): boolean => {
+  try {
+    return new URL(candidate).origin === WORKER_ORIGIN;
+  } catch {
+    return false;
+  }
+};
+
 const realFetch = globalThis.fetch.bind(globalThis);
 globalThis.fetch = ((input: any, init?: any) => {
   const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-  if (url.startsWith(WORKER_BASE)) return (worker as any).fetch(new Request(url, init));
+  if (isWorkerUrl(url)) return (worker as any).fetch(new Request(url, init));
   return realFetch(input, init);
 }) as typeof fetch;

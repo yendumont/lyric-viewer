@@ -213,6 +213,8 @@ export async function spotifyClientSearch(url: string): Promise<any | null> {
   // "track:Song artist:Name" (a Web API filter) is just "Song Name" in Spotify's search box.
   const wanted = (new URL(url).searchParams.get("q") ?? "").replace(/\b(?:track|artist|album):/gi, " ").replace(/\s+/g, " ").trim();
   if (!wanted) return null;
+  // The song's text goes into the command as base64 (letters, digits, + / = only), so nothing in it can be read as code.
+  const payload = Buffer.from(JSON.stringify({ searchTerm: wanted }), "utf8").toString("base64");
   try {
     const targets: any[] = await (await fetch(`http://127.0.0.1:${PORT}/json`, { signal: AbortSignal.timeout(700) })).json();
     const page = targets.find((t) => t.type === "page" && /xpui/i.test(t.url ?? ""));
@@ -236,7 +238,7 @@ export async function spotifyClientSearch(url: string): Promise<any | null> {
             id: 1,
             method: "Runtime.evaluate",
             params: {
-              expression: `(async () => { try { const g = Spicetify.GraphQL; return JSON.stringify(await g.Request(g.Definitions.searchModalResults, { searchTerm: ${JSON.stringify(wanted)}, offset: 0, limit: 8, numberOfTopResults: 8, includeAudiobooks: false, includeArtistHasConcertsField: false, includePreReleases: false, includeAuthors: false })); } catch (e) { return null; } })()`,
+              expression: `(async () => { try { const { searchTerm } = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob("${payload}"), (c) => c.charCodeAt(0)))); const g = Spicetify.GraphQL; return JSON.stringify(await g.Request(g.Definitions.searchModalResults, { searchTerm, offset: 0, limit: 8, numberOfTopResults: 8, includeAudiobooks: false, includeArtistHasConcertsField: false, includePreReleases: false, includeAuthors: false })); } catch (e) { return null; } })()`,
               awaitPromise: true,
               returnByValue: true,
             },

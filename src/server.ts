@@ -309,7 +309,8 @@ const server = Bun.serve({
           writeSettings(body);
           if ("musicFolders" in body) void scanMusic();
         } catch (error) {
-          return json({ error: error instanceof Error ? error.message : String(error) }, 500);
+          console.error("could not save the settings:", error);
+          return json({ error: "could not save the settings" }, 500);
         }
         broadcast();
       }
@@ -395,7 +396,8 @@ const server = Bun.serve({
         });
         return new Response(upstream.body, { status: upstream.status, headers: { "Content-Type": upstream.headers.get("content-type") ?? "application/json" } });
       } catch (error) {
-        return json({ error: { message: `Could not reach Gemini (${error instanceof Error ? error.message : "network error"})` } }, 502);
+        console.error("Gemini request failed:", error);
+        return json({ error: { message: "Could not reach Gemini. Check your internet connection." } }, 502);
       }
     }
     if (url.pathname === "/cover") return coverFor(url.searchParams.get("key") ?? "", url.searchParams.get("video") === "1");
