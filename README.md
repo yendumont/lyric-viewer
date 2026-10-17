@@ -31,7 +31,7 @@ animated background.
 ## Install
 
 You need Windows 10 or 11, an internet connection, and [Bun](https://bun.sh). You do not need to install Node.js or Electron yourself:
-`bun install` downloads Electron (about 100 MB) for you.
+`bun install` fetches the app's packages, and the first start of the app downloads Electron (about 100 MB) for you.
 
 1. **Get the files.** Either click the green **Code** button on this page → **Download ZIP**, and extract it somewhere you will keep it
    (for example `C:\Apps`). The ZIP extracts to a folder called `lyric-viewer-main`, so you get `C:\Apps\lyric-viewer-main`. Or, if you have
@@ -56,8 +56,7 @@ You need Windows 10 or 11, an internet connection, and [Bun](https://bun.sh). Yo
    (Use your own folder in the `cd` line; it must be the folder that contains `start.cmd`. Tip: in File Explorer, open that folder, click the
    address bar, type `powershell` and press Enter.)
 
-4. **Start it** by double-clicking `start.cmd` in that folder. The very first start builds the page, which takes a few seconds before the
-   window appears. It opens its own window; closing the window stops everything. To get a shortcut: right-click `start.cmd` → Show more
+4. **Start it** by double-clicking `start.cmd` in that folder. The very first start downloads Electron (about 100 MB) and builds the page, which takes a minute before the window appears. Later starts are quick. It opens its own window; closing the window stops everything. To get a shortcut: right-click `start.cmd` → Show more
    options → Send to → Desktop (create shortcut), and pin that if you like.
 
 It works straight away with no keys: it finds lyrics from the free sources. Add your keys and other settings afterwards (next section).
@@ -81,7 +80,7 @@ It works straight away with no keys: it finds lyrics from the free sources. Add 
    ```
 
    The second command matters: the page is only built automatically the first time, so without it you would keep seeing the old version.
-5. **Start it** with `start.cmd`.
+5. **Start it** with `start.cmd`. If the update changed Electron's version, it downloads the new one by itself first.
 
 Files that were removed in a newer version are not deleted by copying over. That is harmless; if something acts oddly after a big update,
 extract the ZIP into a fresh folder, copy only your `config.json` and `data` folder into it, and run `bun install` there.
