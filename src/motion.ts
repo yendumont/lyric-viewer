@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { sameName } from "./names.ts";
 
@@ -120,11 +120,17 @@ async function fileOf(variant: string): Promise<Uint8Array | null> {
   return new Uint8Array(await res.arrayBuffer());
 }
 
-function prune(): void {
+export function prune(): void {
   try {
     const files = new Bun.Glob("*.mp4").scanSync(DIR);
     const all = [...files].map((f) => ({ f, at: statSync(join(DIR, f)).mtimeMs })).sort((a, b) => a.at - b.at);
-    for (const old of all.slice(0, Math.max(0, all.length - MAX_FILES))) Bun.spawnSync(["cmd", "/c", "del", join(DIR, old.f)]);
+    for (const old of all.slice(0, Math.max(0, all.length - MAX_FILES))) {
+      try {
+        unlinkSync(join(DIR, old.f));
+      } catch {
+        // already gone, or in use: it is tried again next time
+      }
+    }
   } catch {
     // fine
   }

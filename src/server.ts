@@ -271,8 +271,13 @@ const server = Bun.serve({
   async fetch(req) {
     const url = new URL(req.url);
     // Only this PC's own page may talk to the server (it could otherwise be driven by any website open in a browser).
+    // The Host must be this PC's own address too: a website that points its own name at 127.0.0.1 ("DNS rebinding") would otherwise be
+    // allowed to read what is playing, as such a request carries no Origin. And a request that changes anything has to come from the page.
+    const ownHosts = [`${HOST}:${PORT}`, `localhost:${PORT}`];
+    if (!ownHosts.includes(req.headers.get("host") ?? "")) return new Response("", { status: 403 });
     const origin = req.headers.get("origin");
     if (origin && origin !== `http://${HOST}:${PORT}` && origin !== `http://localhost:${PORT}`) return new Response("", { status: 403 });
+    if (!origin && req.method !== "GET" && req.method !== "HEAD") return new Response("", { status: 403 });
 
     if (url.pathname === "/events") {
       let controller!: ReadableStreamDefaultController<string>;
