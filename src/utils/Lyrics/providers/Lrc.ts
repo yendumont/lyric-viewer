@@ -1,4 +1,5 @@
 import { HasLyricsText } from "../EmptyLines.ts";
+import { BACKGROUND_ROW, isMetadataRow, offsetSeconds, splitVoice } from "../../LocalEmbed/MornyeLrc.ts";
 
 const TIMESTAMP = /\[(\d{1,3}):(\d{1,2})(?:[.:](\d{1,3}))?\]/g;
 
@@ -13,15 +14,37 @@ function toSeconds(min: string, sec: string, frac?: string): number {
  * closes the line before it); the last line ends at `durationSeconds`.
  */
 export function parseLrcToLine(lrc: string, durationSeconds: number): any | null {
-  const entries: { time: number; text: string }[] = [];
+  type Entry = { time: number; text: string; opposite?: boolean };
+  const entries: Entry[] = [];
+  // The entries made by the last timed row, which a following `[bg:...]` row belongs to.
+  let last: Entry[] = [];
+  // `[offset:ms]`: LRC says a positive offset shows the lyrics earlier.
+  const offset = offsetSeconds(lrc);
 
   for (const raw of lrc.split(/\r?\n/)) {
+    // Mornye's extras: a backing vocal goes at the end of the line before it, in brackets;
+    // translation and file tags are not lyrics.
+    const background = BACKGROUND_ROW.exec(raw);
+    if (background) {
+      const text = background[1].replace(/<\d+:\d+(?:[.:]\d+)?>/g, "").replace(/\s+/g, " ").trim();
+      if (HasLyricsText(text)) {
+        for (const entry of last) entry.text = `${entry.text} ${text.startsWith("(") ? text : `(${text})`}`.trim();
+      }
+      continue;
+    }
+    if (isMetadataRow(raw)) continue;
+
     const times = [...raw.matchAll(TIMESTAMP)];
     if (times.length === 0) continue;
-    // Strip the timestamps and any enhanced-LRC word tags (<mm:ss.xx>).
-    const text = raw.replace(TIMESTAMP, "").replace(/<\d+:\d+(?:[.:]\d+)?>/g, "").trim();
+    // Strip the timestamps and any enhanced-LRC word tags (<mm:ss.xx>), and the singer label (v2:).
+    const withTags = raw.replace(TIMESTAMP, "");
+    const voice = splitVoice(withTags);
+    const text = voice.body.replace(/<\d+:\d+(?:[.:]\d+)?>/g, "").trim();
+    last = [];
     for (const t of times) {
-      entries.push({ time: toSeconds(t[1], t[2], t[3]), text });
+      const entry = { time: Math.max(0, toSeconds(t[1], t[2], t[3]) - offset), text, opposite: voice.opposite };
+      entries.push(entry);
+      last.push(entry);
     }
   }
 
@@ -34,7 +57,7 @@ export function parseLrcToLine(lrc: string, durationSeconds: number): any | null
  * before it; the last line ends at `durationSeconds`.
  */
 export function entriesToLine(
-  entries: { time: number; text: string }[],
+  entries: { time: number; text: string; opposite?: boolean }[],
   durationSeconds: number
 ): any | null {
   if (entries.length === 0) return null;
@@ -42,13 +65,13 @@ export function entriesToLine(
 
   const content = [];
   for (let i = 0; i < entries.length; i++) {
-    const { time, text } = entries[i];
+    const { time, text, opposite } = entries[i];
     if (!HasLyricsText(text)) continue;
     const next = entries[i + 1]?.time;
     const end = next ?? Math.max(durationSeconds, time + 3);
     content.push({
       Type: "Vocal",
-      OppositeAligned: false,
+      OppositeAligned: !!opposite,
       Text: text,
       StartTime: time,
       EndTime: end,

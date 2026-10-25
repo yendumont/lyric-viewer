@@ -1,6 +1,7 @@
 import { HasLyricsText } from "../Lyrics/EmptyLines.ts";
 import { parseTTML } from "../Lyrics/ttml/parser.ts";
 import { entriesToLine, parseLrcToLine, parsePlainToStatic } from "../Lyrics/providers/Lrc.ts";
+import { BACKGROUND_ROW, isMetadataRow, offsetSeconds, splitVoice } from "./MornyeLrc.ts";
 import type { FileTags, SyncedEntry } from "./Tags.ts";
 
 /**
@@ -137,12 +138,23 @@ function attachBackingVocals(content: any[]): any[] {
   return kept;
 }
 function buildSyllableLyrics(text: string, durationSeconds: number): any | null {
-  type RawLine = { start: number; body: string };
+  // `opposite`: sung from the other side (Mornye's `v2:`); `background`: its `[bg:...]` rows.
+  type RawLine = { start: number; body: string; opposite: boolean; background: string[] };
   const lines: RawLine[] = [];
+  const offset = offsetSeconds(text);
 
   for (const raw of text.split(/\r?\n/)) {
+    // A backing vocal belongs to the line before it; file tags and translations are not lyrics.
+    const background = BACKGROUND_ROW.exec(raw);
+    if (background) {
+      lines[lines.length - 1]?.background.push(background[1]);
+      continue;
+    }
+    if (isMetadataRow(raw)) continue;
+
     const stamps = [...raw.matchAll(LINE_TIME)];
-    const body = raw.replace(LINE_TIME, "");
+    const voice = splitVoice(raw.replace(LINE_TIME, ""));
+    const body = voice.body;
     if (!body.trim()) continue;
 
     let start: number | undefined = stamps[0] ? seconds(stamps[0][1], stamps[0][2], stamps[0][3]) : undefined;
@@ -151,14 +163,15 @@ function buildSyllableLyrics(text: string, durationSeconds: number): any | null 
       if (firstWord) start = seconds(firstWord[1], firstWord[2], firstWord[3]);
     }
     if (start === undefined) continue;
-    lines.push({ start, body });
+    lines.push({ start, body, opposite: voice.opposite, background: [] });
   }
 
   lines.sort((a, b) => a.start - b.start);
 
   const content: any[] = [];
   lines.forEach((line, i) => {
-    const nextStart = lines[i + 1]?.start;
+    // Two singers can start together, so a line ends where the next *later* one starts.
+    const nextStart = lines.slice(i + 1).find((l) => l.start > line.start)?.start;
     const hasWordTimes = HAS_WORD_TIME.test(line.body);
     const end = nextStart ?? Math.max(durationSeconds, line.start + 3);
 
@@ -184,20 +197,55 @@ function buildSyllableLyrics(text: string, durationSeconds: number): any | null 
     if (syllables.length === 0) return;
     const first = syllables[0].StartTime;
     const last = syllables[syllables.length - 1].EndTime;
-    content.push({
+    const vocal: any = {
       Type: "Vocal",
-      OppositeAligned: false,
+      OppositeAligned: line.opposite,
       Lead: { Syllables: syllables, StartTime: first, EndTime: last },
-    });
+    };
+
+    const backing = line.background
+      .map((body) => {
+        const firstTag = [...body.matchAll(WORD_TIME)][0];
+        const from = firstTag ? seconds(firstTag[1], firstTag[2], firstTag[3]) : first;
+        const spoken = syllablesFor(body, from, Math.max(last, from)).filter((s) => HasLyricsText(s.Text));
+        return spoken.length
+          ? { Syllables: spoken, StartTime: spoken[0].StartTime, EndTime: spoken[spoken.length - 1].EndTime }
+          : null;
+      })
+      .filter(Boolean);
+    if (backing.length > 0) vocal.Background = backing;
+    content.push(vocal);
   });
 
   if (content.length === 0) return null;
   const shown = attachBackingVocals(content);
-  return {
+  const result = {
     Type: "Syllable",
     StartTime: shown[0].Lead.StartTime,
     EndTime: shown[shown.length - 1].Lead.EndTime,
     Content: shown,
+  };
+  return offset ? shiftSyllableLyrics(result, -offset) : result;
+}
+
+/** The same lyrics, every time moved by `delta` seconds (never before 0). */
+function shiftSyllableLyrics(lyrics: any, delta: number): any {
+  const at = (t: number) => Math.max(0, t + delta);
+  const part = (p: any) => ({
+    ...p,
+    StartTime: at(p.StartTime),
+    EndTime: at(p.EndTime),
+    ...(p.Syllables ? { Syllables: p.Syllables.map((s: Syllable) => ({ ...s, StartTime: at(s.StartTime), EndTime: at(s.EndTime) })) } : {}),
+  });
+  return {
+    ...lyrics,
+    StartTime: at(lyrics.StartTime),
+    EndTime: at(lyrics.EndTime),
+    Content: lyrics.Content.map((vocal: any) => ({
+      ...vocal,
+      Lead: part(vocal.Lead),
+      ...(vocal.Background ? { Background: vocal.Background.map(part) } : {}),
+    })),
   };
 }
 
