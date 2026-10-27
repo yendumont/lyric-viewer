@@ -151,6 +151,10 @@ export function parsePlainToStatic(text: string): any | null {
   const lines = text
     .split(/\r?\n/)
     .map((line) => line.trim())
+    // A placeholder [00:00.00] in front of each line (unsynced lyrics saved by some apps) is not part of the words.
+    .map((line) => line.replace(/^(?:\[0{1,3}:0{1,2}(?:[.:]0{1,3})?\]\s*)+/, "").trim())
+    // File tags ([ti:], [ar:], [by:]...), Mornye's extras and [bg:] rows are not lyrics.
+    .filter((line) => !isMetadataRow(line) && !BACKGROUND_ROW.test(line))
     .filter((line) => HasLyricsText(line))
     .map((line) => ({ Text: line }));
 

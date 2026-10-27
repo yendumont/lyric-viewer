@@ -24,8 +24,16 @@ const seconds = (min: string, sec: string, frac?: string) =>
 /** A whole TTML document stored as the lyrics text (what some tools write into a file). */
 const looksLikeTtml = (text: string): boolean => /^\s*(?:<\?xml[^>]*>\s*)?<(?:\w+:)?tt[\s>]/i.test(text);
 
+/** True when the text has line times and every one of them is 0:00 (no real timing, just a placeholder). */
+function everyLineTimeIsZero(text: string): boolean {
+  const times = [...text.matchAll(/^\s*\[(\d{1,3}):(\d{1,2})(?:[.:](\d{1,3}))?\]/gm)];
+  return times.length > 0 && times.every((m) => Number(m[1]) === 0 && Number(m[2]) === 0 && Number(`0.${m[3] ?? "0"}`) === 0);
+}
+
 /** How synced a lyrics text is, for choosing between several in one file: 3 word, 2 line, 1 plain. */
 export function syncRankOfText(text: string): number {
+  // Unsynced lyrics that an app saved with a [00:00.00] on every line carry no timing at all.
+  if (everyLineTimeIsZero(text)) return 1;
   if (HAS_WORD_TIME.test(text) && HAS_LINE_TIME.test(text)) return 3;
   if (HAS_LINE_TIME.test(text)) return 2;
   return 1;

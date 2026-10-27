@@ -53,3 +53,27 @@ test("ordinary enhanced LRC is unchanged", () => {
   const l = parseLrcToLine("[00:01.00]Hello\n[00:03.00]World", 10);
   expect(l.Content.map((c: any) => c.Text)).toEqual(["Hello", "World"]);
 });
+
+test("unsynced text drops file tags but keeps section headings", () => {
+  const parsed = parseEmbeddedText("[ti:Song]\n[ar:Artist]\n[by:Mornye (source: Extension: x)]\n\n[Chorus]\nHello there\nSecond line", 180);
+  expect(parsed.Type).toBe("Static");
+  expect(parsed.Lines.map((l: any) => l.Text)).toEqual(["[Chorus]", "Hello there", "Second line"]);
+});
+
+test("unsynced text: file tags and extra rows are not lyrics; section headers and words are kept", async () => {
+  const { parsePlainToStatic } = await import("../src/utils/Lyrics/providers/Lrc.ts");
+  const out = parsePlainToStatic("[ti:Song]\n[ar:Artist]\n[by:Mornye (source: Extension: lyrics-hub)]\n\n[Chorus]\nHello there\n[x-translation:0:QUJD]\nSecond line");
+  expect(out.Lines.map((l: any) => l.Text)).toEqual(["[Chorus]", "Hello there", "Second line"]);
+  const viaEmbed = parseEmbeddedText("[ti:Song]\n[ar:Artist]\n[by:Mornye (source: Extension: lyrics-hub)]\n\nHello there\nSecond line", 200);
+  expect(viaEmbed.Type).toBe("Static");
+  expect(viaEmbed.Lines.map((l: any) => l.Text)).toEqual(["Hello there", "Second line"]);
+});
+
+test("unsynced lyrics saved with [00:00.00] on every line show as plain text, real timing is untouched", async () => {
+  const unsynced = parseEmbeddedText("[ti:a]\n[by:Mornye (source: Extension: lyrics-hub)]\n\n[00:00.00]One\n[00:00.00]Two", 200);
+  expect(unsynced.Type).toBe("Static");
+  expect(unsynced.Lines.map((l: any) => l.Text)).toEqual(["One", "Two"]);
+  const synced = parseEmbeddedText("[00:00.00]One\n[00:04.50]Two", 200);
+  expect(synced.Type).toBe("Line");
+  expect(synced.Content.length).toBe(2);
+});
