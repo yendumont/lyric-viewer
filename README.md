@@ -31,6 +31,20 @@ animated background.
 - **Local files**: lyrics stored in the song's file (lyrics tag, embedded TTML or LRC, synced-lyrics frame), found through your music
   folders or Windows Search.
 
+## Screenshots
+
+**Videos playing in VLC** fill the background, kept in step with VLC.
+
+<p align="center"><img src="assets/vlc-video-background.gif" width="720" alt="A video playing in VLC as the lyrics background"></p>
+
+**Spotify Canvas** in the Canvas Stage layout.
+
+<p align="center"><img src="assets/spotify-canvas.gif" width="720" alt="Spotify Canvas behind the lyrics"></p>
+
+**Genius loose search and best-guess match** finding lyrics when the exact song isn't listed.
+
+<p align="center"><img src="assets/genius-loose-search.gif" width="720" alt="Genius loose search and best-guess matching"></p>
+
 ## Install
 
 You need Windows 10 or 11, an internet connection, and [Bun](https://bun.sh). You do not need to install Node.js or Electron yourself:
