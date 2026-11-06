@@ -37,6 +37,81 @@ const CACHE_SECONDS = 60 * 60 * 24;
 const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
+// ── Genius request identities ────────────────────────────────────────────────
+// Genius's bot protection answers some requests with 403. Genius's developers have said that
+// browser-like requests for the lyrics of songs real users ask for are fine, so on a 403 another
+// browser identity is tried, and the one that worked is kept for the next request.
+const GENIUS_PROFILES = [
+  (json) => ({
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+    Accept: json ? "application/json, text/plain, */*" : "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "sec-ch-ua": '"Chromium";v="141", "Not?A_Brand";v="8", "Google Chrome";v="141"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "Sec-Fetch-Dest": json ? "empty" : "document",
+    "Sec-Fetch-Mode": json ? "cors" : "navigate",
+    "Sec-Fetch-Site": json ? "same-origin" : "none",
+    ...(json ? { Referer: "https://genius.com/" } : { "Upgrade-Insecure-Requests": "1" }),
+  }),
+  (json) => ({
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0",
+    Accept: json ? "application/json, text/plain, */*" : "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+    ...(json ? { Referer: "https://genius.com/" } : { "Upgrade-Insecure-Requests": "1" }),
+  }),
+  (json) => ({
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1",
+    Accept: json ? "application/json" : "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+  }),
+  (json) => ({ "User-Agent": "Mozilla/5.0", Accept: json ? "application/json" : "*/*" }),
+];
+let geniusProfile = 0;
+
+/** One request to Genius with the given headers, following redirects by hand (Genius sets a cookie and redirects to the same address). */
+async function geniusHop(target, headers) {
+  const cookies = new Map();
+  let next = target;
+  let res;
+  for (let hop = 0; hop < 5; hop++) {
+    const sent = { ...headers };
+    if (cookies.size) sent.Cookie = [...cookies].map(([k, v]) => `${k}=${v}`).join("; ");
+    res = await fetch(next, {
+      headers: sent,
+      redirect: "manual",
+      // Cloudflare-only: keep Genius's answer for a day so repeat plays do not hit it again.
+      cf: { cacheEverything: true, cacheTtl: CACHE_SECONDS },
+    });
+    const where = res.headers.get("Location");
+    if (res.status < 300 || res.status >= 400 || !where) break;
+    for (const line of res.headers.getSetCookie?.() ?? res.headers.getAll?.("Set-Cookie") ?? []) {
+      const pair = line.split(";")[0];
+      const eq = pair.indexOf("=");
+      if (eq > 0) cookies.set(pair.slice(0, eq).trim(), pair.slice(eq + 1).trim());
+    }
+    const resolved = new URL(where, next);
+    // Never leave Genius.
+    if (resolved.hostname !== "genius.com" && !resolved.hostname.endsWith(".genius.com")) break;
+    next = resolved.href;
+  }
+  return res;
+}
+
+/** A Genius request that tries another browser identity when Genius answers 403. */
+async function geniusFetch(target, wantsJson) {
+  let last;
+  for (let n = 0; n < GENIUS_PROFILES.length; n++) {
+    const p = (geniusProfile + n) % GENIUS_PROFILES.length;
+    last = await geniusHop(target, GENIUS_PROFILES[p](wantsJson));
+    if (last.status !== 403) {
+      geniusProfile = p;
+      return last;
+    }
+  }
+  return last;
+}
+
 // ── YouTube Music ────────────────────────────────────────────────────────────
 // YouTube Music's web client calls this API from music.youtube.com itself. Like Genius
 // it is out of reach of Spotify's page (no CORS, and Spicetify's proxy is refused), so
@@ -123,12 +198,9 @@ function meaningLevel(referent) {
 
 async function geniusMeanings(songId) {
   const page = async (n) => {
-    const res = await fetch(
+    const res = await geniusFetch(
       `https://genius.com/api/referents?song_id=${songId}&text_format=plain&per_page=50&page=${n}`,
-      {
-        headers: { "User-Agent": USER_AGENT, "Accept-Language": "en-US,en;q=0.9", Accept: "application/json" },
-        cf: { cacheEverything: true, cacheTtl: CACHE_SECONDS },
-      }
+      true
     );
     if (!res.ok) throw new Error(`genius responded ${res.status}`);
     return (await res.json())?.response?.referents ?? [];
@@ -287,10 +359,7 @@ export default {
       const path = url.searchParams.get("path") ?? "";
       if (!LYRICS_PATH.test(path)) return reply({ error: "bad path" }, 400);
       try {
-        const res = await fetch(`https://genius.com/songs/${url.searchParams.get("id")}/embed.js`, {
-          headers: { "User-Agent": USER_AGENT, "Accept-Language": "en-US,en;q=0.9" },
-          cf: { cacheEverything: true, cacheTtl: CACHE_SECONDS },
-        });
+        const res = await geniusFetch(`https://genius.com/songs/${url.searchParams.get("id")}/embed.js`, false);
         if (res.ok) {
           const script = await res.text();
           const literal = /JSON\.parse\('((?:[^'\\]|\\.)*)'\)/s.exec(script)?.[1];
@@ -367,40 +436,9 @@ export default {
     }
 
     const wantsJson = url.pathname === "/search" || url.pathname === "/referents";
-    const headers = {
-      "User-Agent": USER_AGENT,
-      "Accept-Language": "en-US,en;q=0.9",
-      Accept: wantsJson ? "application/json" : "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-    };
-
-    // Genius answers a first visit to a page with a redirect to the same address that sets a
-    // cookie, and a Worker keeps no cookies, so following redirects blindly loops. They are
-    // followed here by hand, carrying the cookies along.
-    const cookies = new Map();
     let upstream;
     try {
-      let next = target;
-      for (let hop = 0; hop < 5; hop++) {
-        const sent = { ...headers };
-        if (cookies.size) sent.Cookie = [...cookies].map(([k, v]) => `${k}=${v}`).join("; ");
-        upstream = await fetch(next, {
-          headers: sent,
-          redirect: "manual",
-          // Cloudflare-only: keep Genius's answer for a day so repeat plays do not hit it again.
-          cf: { cacheEverything: true, cacheTtl: CACHE_SECONDS },
-        });
-        const where = upstream.headers.get("Location");
-        if (upstream.status < 300 || upstream.status >= 400 || !where) break;
-        for (const line of upstream.headers.getAll?.("Set-Cookie") ?? [upstream.headers.get("Set-Cookie") ?? ""]) {
-          const pair = line.split(";")[0];
-          const eq = pair.indexOf("=");
-          if (eq > 0) cookies.set(pair.slice(0, eq).trim(), pair.slice(eq + 1).trim());
-        }
-        const resolved = new URL(where, next);
-        // Never leave Genius.
-        if (resolved.hostname !== "genius.com" && !resolved.hostname.endsWith(".genius.com")) break;
-        next = resolved.href;
-      }
+      upstream = await geniusFetch(target, wantsJson);
     } catch (e) {
       return reply({ error: `could not reach genius` }, 502);
     }
